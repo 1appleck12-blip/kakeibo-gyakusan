@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>のこり帳</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --paper: #f2ede1;
+    --paper-line: #e3dbc8;
+    --ink: #232a3d;
+    --ink-soft: #5b6275;
+    --hanko: #a83a32;
+    --hanko-soft: #c96a5c;
+    --ok: #3c6e52;
+    --gold: #b08d3f;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; background: var(--paper); color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif; min-height:100vh; }
+  body{
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(35,42,61,0.05) 28px),
+      radial-gradient(circle at 15% 10%, rgba(176,141,63,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(168,58,50,0.05), transparent 40%);
+  }
+  .wrap{ max-width: 480px; margin: 0 auto; padding: 28px 18px 60px; }
+
+  header{ display:flex; align-items:baseline; justify-content:space-between;
+    border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 22px; }
+  header h1{ font-family: 'Shippori Mincho', serif; font-weight: 700; font-size: 26px;
+    letter-spacing: 0.08em; margin: 0; }
+  header .sub{ font-size: 11px; color: var(--ink-soft); letter-spacing: 0.15em; }
+
+  .card{ background: rgba(255,255,255,0.5); border: 1px solid var(--paper-line);
+    border-radius: 2px; padding: 18px; margin-bottom: 18px; }
+
+  label{ display:block; font-size: 12px; color: var(--ink-soft); letter-spacing: 0.1em; margin-bottom: 6px; }
+
+  .budget-row{ display:flex; align-items:center; gap: 8px; }
+
+  input[type=number], input[type=text], select{
+    font-family: 'Space Mono', monospace; font-size: 16px; background: transparent;
+    border: none; border-bottom: 1px solid var(--ink-soft); padding: 7px 2px; color: var(--ink);
+    width: 100%; outline: none; -webkit-appearance:none; appearance:none;
+  }
+  select{ font-family:'Zen Kaku Gothic New', sans-serif; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><polygon points='0,0 10,0 5,6' fill='%235b6275'/></svg>"); background-repeat:no-repeat; background-position: right 4px center; padding-right: 16px; }
+  input[type=number]:focus, input[type=text]:focus, select:focus{ border-bottom: 1px solid var(--hanko); }
+
+  .yen{ font-family:'Space Mono', monospace; color: var(--ink-soft); font-size: 15px; }
+
+  .entry-form{ display:grid; grid-template-columns: 1fr; gap: 10px; }
+  .entry-row2{ display:grid; grid-template-columns: 1fr 100px; gap: 10px; }
+  .entry-row3{ display:grid; grid-template-columns: 1fr auto; gap: 10px; align-items:end; }
+
+  button{ font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 700; border: 1px solid var(--ink);
+    background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: 2px; cursor: pointer;
+    font-size: 13px; letter-spacing: 0.05em; transition: transform 0.08s ease, opacity 0.15s ease; }
+  button:active{ transform: scale(0.96); }
+  button.ghost{ background: transparent; color: var(--ink-soft); border-color: var(--paper-line); font-weight: 500; }
+  button.small{ padding: 5px 9px; font-size: 11px; }
+
+  .ledger{ list-style:none; margin: 0; padding: 0; }
+  .ledger li{ display:flex; align-items:baseline; gap: 8px; padding: 9px 0;
+    border-bottom: 1px dashed var(--paper-line); font-size: 14px; }
+  .ledger li:last-child{ border-bottom:none; }
+  .dot{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+  .ledger .cat{ font-size: 10px; color: var(--ink-soft); letter-spacing:0.05em; }
+  .ledger .name{ flex: 1; color: var(--ink); }
+  .ledger .leader{ flex: 1; border-bottom: 1px dotted #c9c1ac; margin: 0 2px 4px; min-width: 10px; }
+  .ledger .amt{ font-family:'Space Mono', monospace; color: var(--ink-soft); white-space:nowrap; }
+  .ledger .del{ background:none; border:none; color: var(--hanko-soft); font-size: 15px; padding: 0 0 0 6px; cursor:pointer; }
+
+  .empty{ color: var(--ink-soft); font-size: 13px; text-align:center; padding: 18px 0; opacity: 0.7; }
+
+  .chart-row{ display:flex; align-items:center; gap: 22px; }
+  .donut-wrap{ position:relative; width: 150px; height:150px; flex:0 0 auto; }
+  .donut-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .donut-center .amt{ font-family:'Space Mono', monospace; font-weight:700; font-size:16px; }
+  .donut-center .lbl{ font-size:9px; color:var(--ink-soft); letter-spacing:0.1em; margin-top:2px; }
+
+  .cat-list{ flex:1; list-style:none; margin:0; padding:0; }
+  .cat-list li{ display:flex; align-items:center; gap:7px; padding: 5px 0; font-size:12.5px; }
+  .cat-list .cname{ flex:1; color:var(--ink); }
+  .cat-list .camt{ font-family:'Space Mono', monospace; color:var(--ink-soft); font-size:12px; }
+  .cat-list .cpct{ font-family:'Space Mono', monospace; color:var(--ink-soft); font-size:10px; width:32px; text-align:right; }
+
+  .cat-manage{ margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--paper-line); }
+  .cat-chip{ display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.6);
+    border:1px solid var(--paper-line); border-radius:20px; padding: 4px 10px 4px 8px; margin: 0 6px 6px 0; font-size:12px; }
+  .cat-chip .dot{ width:8px; height:8px; }
+  .cat-chip button{ background:none; border:none; color: var(--hanko-soft); padding:0 0 0 4px; font-size:13px; cursor:pointer; }
+  .add-cat-row{ display:flex; gap:8px; margin-top: 8px; }
+  .add-cat-row input{ flex:1; }
+
+  .cat-budget-list{ list-style:none; margin:0; padding:0; }
+  .cat-budget-list li{ display:flex; align-items:center; gap:8px; padding:8px 0;
+    border-bottom:1px dashed var(--paper-line); font-size:13px; }
+  .cat-budget-list li:last-child{ border-bottom:none; }
+  .cat-budget-list .cname{ flex:1; color:var(--ink); display:flex; align-items:center; gap:7px; }
+  .cat-budget-list input[type=number]{ width:88px; font-size:14px; text-align:right; }
+  .cat-budget-list .remain{ font-family:'Space Mono', monospace; font-size:11px; width:76px;
+    text-align:right; color:var(--ink-soft); white-space:nowrap; }
+  .cat-budget-list .remain.neg{ color:var(--hanko); }
+  .cat-budget-list .del-cat{ background:none; border:none; color: var(--hanko-soft);
+    font-size:15px; padding:0 0 0 2px; cursor:pointer; }
+
+  .balance{ margin-top: 22px; border: 2px solid var(--ink); padding: 22px 18px; text-align: right;
+    position: relative; background: rgba(255,255,255,0.4); }
+  .balance .label{ font-size: 12px; letter-spacing: 0.15em; color: var(--ink-soft); margin-bottom: 4px; }
+  .balance .amount{ font-family: 'Space Mono', monospace; font-size: 40px; font-weight: 700; line-height: 1; }
+  .balance .amount.pos{ color: var(--ok); }
+  .balance .amount.neg{ color: var(--hanko); }
+  .balance .stamp{ position:absolute; top: -14px; left: -14px; width: 50px; height: 50px;
+    border: 2px solid var(--hanko); border-radius: 4px; color: var(--hanko); font-family:'Shippori Mincho', serif;
+    font-weight:700; font-size: 12px; display:flex; align-items:center; justify-content:center;
+    background: var(--paper); transform: rotate(-8deg); letter-spacing: 0.05em; line-height:1.2; text-align:center; }
+
+  .meta-row{ display:flex; justify-content:space-between; font-size: 11px; color: var(--ink-soft);
+    margin-top: 8px; letter-spacing: 0.05em; }
+  .reset-line{ text-align:center; margin-top: 28px; }
+  .reset-line button{ font-size: 11px; padding: 6px 10px; }
+  ::selection{ background: var(--gold); color: white; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>のこり帳</h1>
+    <div class="sub">GYAKUSAN LEDGER</div>
+  </header>
+
+  <div class="card">
+    <label>カテゴリ別の予算</label>
+    <ul class="cat-budget-list" id="catBudgetList"></ul>
+    <div class="add-cat-row">
+      <input type="text" id="newCatName" placeholder="新しいカテゴリ名">
+      <input type="number" id="newCatBudget" placeholder="¥予算" inputmode="numeric" style="width:100px">
+      <button class="ghost small" id="addCatBtn">追加</button>
+    </div>
+    <div class="meta-row" style="margin-top:14px;">
+      <span>予算の合計</span>
+      <span id="totalBudgetDisplay" class="yen">¥0</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>使った金額を記録する</label>
+    <div class="entry-form">
+      <input type="text" id="itemName" placeholder="なにに使った？（任意）">
+      <div class="entry-row3">
+        <select id="itemCategory"></select>
+        <input type="number" id="itemAmount" placeholder="¥0" inputmode="numeric" style="width:110px">
+      </div>
+      <button id="addBtn">＋ 記録に追加</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>内訳</label>
+    <div class="chart-row">
+      <div class="donut-wrap">
+        <svg id="donut" width="150" height="150" viewBox="0 0 150 150"></svg>
+        <div class="donut-center">
+          <div class="amt" id="donutTotal">¥0</div>
+          <div class="lbl">合計</div>
+        </div>
+      </div>
+      <ul class="cat-list" id="catList"></ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>これまでの記録</label>
+    <ul class="ledger" id="ledgerList"></ul>
+    <div class="empty" id="emptyMsg">まだ記録はありません</div>
+  </div>
+
+  <div class="balance">
+    <div class="stamp">のこり</div>
+    <div class="label">残金</div>
+    <div class="amount" id="balanceAmount">¥0</div>
+  </div>
+  <div class="meta-row">
+    <span id="spentTotal">使った合計 ¥0</span>
+    <span id="itemCount">0 件</span>
+  </div>
+
+  <div class="reset-line">
+    <button class="ghost" id="resetBtn">記録をすべてリセット</button>
+  </div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'gyakusan-ledger-v3';
+
+  const PALETTE = [
+    '#a83a32', '#3c6e52', '#b08d3f', '#3d5a80', '#7a5c8e',
+    '#c96a5c', '#6b8f71', '#8c6d3f', '#5b7a9e', '#9c7ab0',
+    '#4a5568', '#af8a53'
+  ];
+
+  const DEFAULT_CATEGORIES = [
+    '食費','日用品','趣味','固定費','その他','医療費',
+    '交通費','衣服','交際費','投資'
+  ].map((name, i) => ({ name, color: PALETTE[i % PALETTE.length], budget: 0 }));
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return { entries: [], categories: DEFAULT_CATEGORIES };
+  }
+  function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+  let state = loadState();
+  if(!state.categories || state.categories.length === 0) state.categories = DEFAULT_CATEGORIES;
+  state.categories.forEach(c => { if(typeof c.budget !== 'number') c.budget = 0; });
+
+  const itemName = document.getElementById('itemName');
+  const itemAmount = document.getElementById('itemAmount');
+  const itemCategory = document.getElementById('itemCategory');
+  const addBtn = document.getElementById('addBtn');
+  const ledgerList = document.getElementById('ledgerList');
+  const emptyMsg = document.getElementById('emptyMsg');
+  const balanceAmount = document.getElementById('balanceAmount');
+  const spentTotal = document.getElementById('spentTotal');
+  const itemCount = document.getElementById('itemCount');
+  const resetBtn = document.getElementById('resetBtn');
+  const catBudgetList = document.getElementById('catBudgetList');
+  const newCatName = document.getElementById('newCatName');
+  const newCatBudget = document.getElementById('newCatBudget');
+  const addCatBtn = document.getElementById('addCatBtn');
+  const totalBudgetDisplay = document.getElementById('totalBudgetDisplay');
+  const donutSvg = document.getElementById('donut');
+  const donutTotal = document.getElementById('donutTotal');
+  const catList = document.getElementById('catList');
+
+  function formatYen(n){
+    const sign = n < 0 ? '−' : '';
+    return sign + '¥' + Math.abs(Math.round(n)).toLocaleString('ja-JP');
+  }
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function colorForCategory(name){
+    const c = state.categories.find(c => c.name === name);
+    return c ? c.color : '#999';
+  }
+
+  function renderCategorySelect(){
+    const current = itemCategory.value;
+    itemCategory.innerHTML = state.categories.map(c =>
+      `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`
+    ).join('');
+    if(state.categories.some(c => c.name === current)) itemCategory.value = current;
+  }
+
+  function spentByCategory(name){
+    return state.entries.reduce((sum, e) => e.category === name ? sum + (Number(e.amount)||0) : sum, 0);
+  }
+
+  function renderCatBudgetList(){
+    catBudgetList.innerHTML = state.categories.map((c, idx) => {
+      const spent = spentByCategory(c.name);
+      const remain = (Number(c.budget) || 0) - spent;
+      return `
+        <li>
+          <span class="cname">
+            <span class="dot" style="background:${c.color}"></span>
+            ${escapeHtml(c.name)}
+          </span>
+          <input type="number" class="cat-budget-input" data-idx="${idx}" value="${c.budget || ''}" placeholder="¥0" inputmode="numeric">
+          <span class="remain ${remain < 0 ? 'neg' : ''}">${formatYen(remain)}</span>
+          <button data-idx="${idx}" class="del-cat" title="削除">×</button>
+        </li>
+      `;
+    }).join('');
+
+    const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
+    totalBudgetDisplay.textContent = formatYen(totalBudget);
+  }
+
+  function describeDonut(data){
+    // data: [{name, color, value}]
+    const total = data.reduce((s, d) => s + d.value, 0);
+    if(total <= 0){
+      return `<circle cx="75" cy="75" r="58" fill="none" stroke="#e3dbc8" stroke-width="26"/>`;
+    }
+    const r = 58, cx = 75, cy = 75, circumference = 2 * Math.PI * r;
+    let offset = 0;
+    let circles = '';
+    data.forEach(d => {
+      if(d.value <= 0) return;
+      const frac = d.value / total;
+      const dash = frac * circumference;
+      const gap = circumference - dash;
+      circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}"
+        stroke-width="26" stroke-dasharray="${dash} ${gap}"
+        stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+      offset += dash;
+    });
+    return circles;
+  }
+
+  function render(){
+    renderCatBudgetList();
+    renderCategorySelect();
+
+    // ledger
+    ledgerList.innerHTML = '';
+    if(state.entries.length === 0){
+      emptyMsg.style.display = 'block';
+    } else {
+      emptyMsg.style.display = 'none';
+      state.entries.forEach((entry, idx) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="dot" style="background:${colorForCategory(entry.category)}"></span>
+          <span class="name">${escapeHtml(entry.name || entry.category)}<br><span class="cat">${escapeHtml(entry.category)}</span></span>
+          <span class="leader"></span>
+          <span class="amt">${formatYen(entry.amount)}</span>
+          <button class="del" data-idx="${idx}" title="削除">×</button>
+        `;
+        ledgerList.appendChild(li);
+      });
+    }
+
+    // category totals
+    const totalsByCategory = {};
+    state.categories.forEach(c => totalsByCategory[c.name] = 0);
+    state.entries.forEach(e => {
+      totalsByCategory[e.category] = (totalsByCategory[e.category] || 0) + (Number(e.amount) || 0);
+    });
+    const chartData = state.categories
+      .map(c => ({ name: c.name, color: c.color, value: totalsByCategory[c.name] || 0 }))
+      .sort((a,b) => b.value - a.value);
+
+    const spent = state.entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+    donutSvg.innerHTML = describeDonut(chartData);
+    donutTotal.textContent = formatYen(spent);
+
+    const shown = chartData.filter(d => d.value > 0);
+    catList.innerHTML = shown.length === 0
+      ? `<li style="color:var(--ink-soft); font-size:12px;">記録がまだありません</li>`
+      : shown.map(d => `
+          <li>
+            <span class="dot" style="background:${d.color}"></span>
+            <span class="cname">${escapeHtml(d.name)}</span>
+            <span class="camt">${formatYen(d.value)}</span>
+            <span class="cpct">${spent > 0 ? Math.round(d.value/spent*100) : 0}%</span>
+          </li>
+        `).join('');
+
+    const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
+    const remaining = totalBudget - spent;
+    balanceAmount.textContent = formatYen(remaining);
+    balanceAmount.classList.toggle('pos', remaining >= 0);
+    balanceAmount.classList.toggle('neg', remaining < 0);
+
+    spentTotal.textContent = '使った合計 ' + formatYen(spent);
+    itemCount.textContent = state.entries.length + ' 件';
+
+    saveState();
+  }
+
+  function addEntry(){
+    const name = itemName.value.trim();
+    const amount = Number(itemAmount.value);
+    const category = itemCategory.value || (state.categories[0] && state.categories[0].name);
+    if(!amount || amount <= 0){ itemAmount.focus(); return; }
+    if(!category){ alert('先にカテゴリを追加してください'); return; }
+    state.entries.unshift({ name, amount, category });
+    itemName.value = '';
+    itemAmount.value = '';
+    itemName.focus();
+    render();
+  }
+  addBtn.addEventListener('click', addEntry);
+  itemAmount.addEventListener('keydown', (e) => { if(e.key === 'Enter') addEntry(); });
+  itemName.addEventListener('keydown', (e) => { if(e.key === 'Enter') itemAmount.focus(); });
+
+  ledgerList.addEventListener('click', (e) => {
+    if(e.target.classList.contains('del')){
+      state.entries.splice(Number(e.target.dataset.idx), 1);
+      render();
+    }
+  });
+
+  addCatBtn.addEventListener('click', () => {
+    const name = newCatName.value.trim();
+    if(!name) return;
+    if(state.categories.some(c => c.name === name)){ newCatName.value=''; newCatBudget.value=''; return; }
+    const color = PALETTE[state.categories.length % PALETTE.length];
+    const budget = Number(newCatBudget.value) || 0;
+    state.categories.push({ name, color, budget });
+    newCatName.value = '';
+    newCatBudget.value = '';
+    render();
+  });
+  newCatName.addEventListener('keydown', (e) => { if(e.key === 'Enter') newCatBudget.focus(); });
+  newCatBudget.addEventListener('keydown', (e) => { if(e.key === 'Enter') addCatBtn.click(); });
+
+  catBudgetList.addEventListener('click', (e) => {
+    if(e.target.classList.contains('del-cat')){
+      const idx = Number(e.target.dataset.idx);
+      const cat = state.categories[idx];
+      const inUse = state.entries.some(en => en.category === cat.name);
+      if(inUse && !confirm(`「${cat.name}」を使った記録があります。カテゴリを削除しますか？（記録は残ります）`)) return;
+      state.categories.splice(idx, 1);
+      render();
+    }
+  });
+
+  catBudgetList.addEventListener('input', (e) => {
+    if(e.target.classList.contains('cat-budget-input')){
+      const idx = Number(e.target.dataset.idx);
+      state.categories[idx].budget = Number(e.target.value) || 0;
+      // update totals live without full re-render (keeps input focus)
+      const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
+      totalBudgetDisplay.textContent = formatYen(totalBudget);
+      const spent = state.entries.reduce((sum, en) => sum + (Number(en.amount) || 0), 0);
+      const remaining = totalBudget - spent;
+      balanceAmount.textContent = formatYen(remaining);
+      balanceAmount.classList.toggle('pos', remaining >= 0);
+      balanceAmount.classList.toggle('neg', remaining < 0);
+      saveState();
+    }
+  });
+  catBudgetList.addEventListener('change', () => render());
+
+  resetBtn.addEventListener('click', () => {
+    if(confirm('記録をすべて消去します。カテゴリと予算は残ります。よろしいですか？')){
+      state.entries = [];
+      render();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
