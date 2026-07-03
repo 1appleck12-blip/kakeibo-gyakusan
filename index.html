@@ -34,6 +34,18 @@
     letter-spacing: 0.08em; margin: 0; }
   header .sub{ font-size: 11px; color: var(--ink-soft); letter-spacing: 0.15em; }
 
+  .sticky-total{
+    position: sticky; top: 0; z-index: 50;
+    display:flex; align-items:baseline; justify-content:space-between;
+    background: var(--paper);
+    border-bottom: 2px solid var(--ink);
+    padding: 10px 2px 12px;
+    margin: -4px 0 18px;
+    box-shadow: 0 6px 10px -8px rgba(35,42,61,0.35);
+  }
+  .sticky-label{ font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; }
+  .sticky-amount{ font-family:'Space Mono', monospace; font-weight:700; font-size: 19px; color: var(--ink); }
+
   .card{ background: rgba(255,255,255,0.5); border: 1px solid var(--paper-line);
     border-radius: 2px; padding: 18px; margin-bottom: 18px; }
 
@@ -72,6 +84,7 @@
   .ledger .leader{ flex: 1; border-bottom: 1px dotted #c9c1ac; margin: 0 2px 4px; min-width: 10px; }
   .ledger .amt{ font-family:'Space Mono', monospace; color: var(--ink-soft); white-space:nowrap; }
   .ledger .del{ background:none; border:none; color: var(--hanko-soft); font-size: 15px; padding: 0 0 0 6px; cursor:pointer; }
+  .ledger .edit{ background:none; border:none; color: var(--ink-soft); font-size: 14px; padding: 0 0 0 6px; cursor:pointer; }
 
   .empty{ color: var(--ink-soft); font-size: 13px; text-align:center; padding: 18px 0; opacity: 0.7; }
 
@@ -132,6 +145,11 @@
     <h1>のこり帳</h1>
     <div class="sub">GYAKUSAN LEDGER</div>
   </header>
+
+  <div class="sticky-total" id="stickyTotal">
+    <span class="sticky-label">予算総額</span>
+    <span class="sticky-amount" id="stickyBudgetAmount">¥0</span>
+  </div>
 
   <div class="card">
     <label>カテゴリ別の予算</label>
@@ -239,6 +257,7 @@
   const newCatBudget = document.getElementById('newCatBudget');
   const addCatBtn = document.getElementById('addCatBtn');
   const totalBudgetDisplay = document.getElementById('totalBudgetDisplay');
+  const stickyBudgetAmount = document.getElementById('stickyBudgetAmount');
   const donutSvg = document.getElementById('donut');
   const donutTotal = document.getElementById('donutTotal');
   const catList = document.getElementById('catList');
@@ -298,6 +317,7 @@
 
     const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
     totalBudgetDisplay.textContent = formatYen(totalBudget);
+    stickyBudgetAmount.textContent = formatYen(totalBudget);
   }
 
   function describeDonut(data){
@@ -339,6 +359,7 @@
           <span class="name">${escapeHtml(entry.name || entry.category)}<br><span class="cat">${formatDateShort(entry.date)}　${escapeHtml(entry.category)}</span></span>
           <span class="leader"></span>
           <span class="amt">${formatYen(entry.amount)}</span>
+          <button class="edit" data-idx="${idx}" title="編集">✎</button>
           <button class="del" data-idx="${idx}" title="削除">×</button>
         `;
         ledgerList.appendChild(li);
@@ -394,6 +415,7 @@
     itemName.value = '';
     itemAmount.value = '';
     itemDate.value = todayStr();
+    addBtn.textContent = '＋ 記録に追加';
     itemName.focus();
     render();
   }
@@ -406,6 +428,19 @@
     if(e.target.classList.contains('del')){
       state.entries.splice(Number(e.target.dataset.idx), 1);
       render();
+    }
+    if(e.target.classList.contains('edit')){
+      const idx = Number(e.target.dataset.idx);
+      const entry = state.entries[idx];
+      itemName.value = entry.name || '';
+      itemCategory.value = entry.category;
+      itemAmount.value = entry.amount;
+      itemDate.value = entry.date || todayStr();
+      state.entries.splice(idx, 1);
+      addBtn.textContent = '✓ 直して記録に戻す';
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      itemAmount.focus();
     }
   });
 
@@ -441,6 +476,7 @@
       // update totals live without full re-render (keeps input focus)
       const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
       totalBudgetDisplay.textContent = formatYen(totalBudget);
+      stickyBudgetAmount.textContent = formatYen(totalBudget);
       const spent = state.entries.reduce((sum, en) => sum + (Number(en.amount) || 0), 0);
       const remaining = totalBudget - spent;
       balanceAmount.textContent = formatYen(remaining);
