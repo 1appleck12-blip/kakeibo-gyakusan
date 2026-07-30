@@ -2,499 +2,525 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>のこり帳</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="逆算家計簿">
+<title>逆算家計簿</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Mochiy+Pop+One&display=swap');
 
   :root{
-    --paper: #f2ede1;
-    --paper-line: #e3dbc8;
-    --ink: #232a3d;
-    --ink-soft: #5b6275;
-    --hanko: #a83a32;
-    --hanko-soft: #c96a5c;
-    --ok: #3c6e52;
-    --gold: #b08d3f;
+    --bg: #0b0b0c;
+    --panel: #17171a;
+    --panel-2: #1d1d21;
+    --line: #2c2c31;
+    --ink: #ece7de;
+    --ink-dim: #9a968d;
+    --vermilion: #c8452e;
+    --vermilion-dim: #7a3025;
+    --gold: #b89257;
+    --green: #6f9c76;
+    --danger: #8a3b34;
+    --c1:#c8452e; --c2:#4f7d63; --c3:#b89257; --c4:#4a6fa5; --c5:#7d6ba0; --c6:#a85c5c; --c7:#4f8a8b; --c8:#8a7248; --c9:#5c7a99; --c10:#9c5b8c;
   }
-  *{ box-sizing: border-box; }
-  html,body{ margin:0; padding:0; background: var(--paper); color: var(--ink);
-    font-family: 'Zen Kaku Gothic New', sans-serif; min-height:100vh; }
-  body{
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(35,42,61,0.05) 28px),
-      radial-gradient(circle at 15% 10%, rgba(176,141,63,0.06), transparent 40%),
-      radial-gradient(circle at 85% 90%, rgba(168,58,50,0.05), transparent 40%);
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{
+    margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    overscroll-behavior:none;
   }
-  .wrap{ max-width: 480px; margin: 0 auto; padding: 28px 18px 60px; }
+  body{ padding-bottom:48px; }
 
-  header{ display:flex; align-items:baseline; justify-content:space-between;
-    border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 22px; }
-  header h1{ font-family: 'Shippori Mincho', serif; font-weight: 700; font-size: 26px;
-    letter-spacing: 0.08em; margin: 0; }
-  header .sub{ font-size: 11px; color: var(--ink-soft); letter-spacing: 0.15em; }
+  .wrap{ max-width:560px; margin:0 auto; padding:28px 20px 20px; }
 
-  .sticky-total{
-    position: sticky; top: 0; z-index: 50;
-    display:flex; align-items:baseline; justify-content:space-between;
-    background: var(--paper);
-    border-bottom: 2px solid var(--ink);
-    padding: 10px 2px 12px;
-    margin: -4px 0 18px;
-    box-shadow: 0 6px 10px -8px rgba(35,42,61,0.35);
+  header.top{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:22px; gap:6px;
   }
-  .sticky-label{ font-size: 11px; color: var(--ink-soft); letter-spacing: 0.1em; }
-  .sticky-amount{ font-family:'Space Mono', monospace; font-weight:700; font-size: 19px; color: var(--ink); }
-
-  .card{ background: rgba(255,255,255,0.5); border: 1px solid var(--paper-line);
-    border-radius: 2px; padding: 18px; margin-bottom: 18px; }
-
-  label{ display:block; font-size: 12px; color: var(--ink-soft); letter-spacing: 0.1em; margin-bottom: 6px; }
-
-  .budget-row{ display:flex; align-items:center; gap: 8px; }
-
-  input[type=number], input[type=text], input[type=date], select{
-    font-family: 'Space Mono', monospace; font-size: 16px; background: transparent;
-    border: none; border-bottom: 1px solid var(--ink-soft); padding: 7px 2px; color: var(--ink);
-    width: 100%; outline: none; -webkit-appearance:none; appearance:none;
+  header.top h1{
+    font-family:'Mochiy Pop One', 'Zen Kaku Gothic New', sans-serif;
+    font-weight:400; font-size:32px; letter-spacing:.06em; margin:0; text-align:center;
+    color:#f7d94a;
+    -webkit-text-stroke: 1.6px #2f5fb3;
+    text-stroke: 1.6px #2f5fb3;
+    text-shadow:
+      -1.6px -1.6px 0 #2f5fb3,
+       1.6px -1.6px 0 #2f5fb3,
+      -1.6px  1.6px 0 #2f5fb3,
+       1.6px  1.6px 0 #2f5fb3,
+       0 3px 0 #1c3d78;
   }
-  select{ font-family:'Zen Kaku Gothic New', sans-serif; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><polygon points='0,0 10,0 5,6' fill='%235b6275'/></svg>"); background-repeat:no-repeat; background-position: right 4px center; padding-right: 16px; }
-  input[type=number]:focus, input[type=text]:focus, input[type=date]:focus, select:focus{ border-bottom: 1px solid var(--hanko); }
+  header.top .en{
+    font-size:10px; letter-spacing:.18em; color:var(--ink-dim); font-family:'Zen Kaku Gothic New', sans-serif;
+    text-align:center;
+  }
 
-  .yen{ font-family:'Space Mono', monospace; color: var(--ink-soft); font-size: 15px; }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:18px 18px 20px; margin-bottom:16px;
+  }
 
-  .entry-form{ display:grid; grid-template-columns: 1fr; gap: 10px; }
-  .entry-row2{ display:grid; grid-template-columns: 1fr 100px; gap: 10px; }
-  .entry-row3{ display:grid; grid-template-columns: 1fr auto; gap: 10px; align-items:end; }
+  .field-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:10px; border-bottom:1px solid var(--gold); margin-bottom:4px;
+  }
+  .field-row .lbl{ font-size:14px; color:var(--ink-dim); letter-spacing:.05em; }
+  .field-row input[type=number]{
+    background:transparent; border:none; color:var(--ink); font-size:22px; font-weight:700;
+    text-align:right; width:150px; font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+  .field-row input[type=number]:focus{ outline:none; color:#fff; }
+  .yen{ font-size:16px; color:var(--ink-dim); margin-right:2px; }
 
-  button{ font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 700; border: 1px solid var(--ink);
-    background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: 2px; cursor: pointer;
-    font-size: 13px; letter-spacing: 0.05em; transition: transform 0.08s ease, opacity 0.15s ease; }
-  button:active{ transform: scale(0.96); }
-  button.ghost{ background: transparent; color: var(--ink-soft); border-color: var(--paper-line); font-weight: 500; }
-  button.small{ padding: 5px 9px; font-size: 11px; }
+  .section-title{
+    font-size:13px; color:var(--ink-dim); letter-spacing:.1em; margin:2px 0 14px;
+  }
 
-  .ledger{ list-style:none; margin: 0; padding: 0; }
-  .ledger li{ display:flex; align-items:baseline; gap: 8px; padding: 9px 0;
-    border-bottom: 1px dashed var(--paper-line); font-size: 14px; }
-  .ledger li:last-child{ border-bottom:none; }
-  .dot{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
-  .ledger .cat{ font-size: 10px; color: var(--ink-soft); letter-spacing:0.05em; }
-  .ledger .name{ flex: 1; color: var(--ink); }
-  .ledger .leader{ flex: 1; border-bottom: 1px dotted #c9c1ac; margin: 0 2px 4px; min-width: 10px; }
-  .ledger .amt{ font-family:'Space Mono', monospace; color: var(--ink-soft); white-space:nowrap; }
-  .ledger .del{ background:none; border:none; color: var(--hanko-soft); font-size: 15px; padding: 0 0 0 6px; cursor:pointer; }
-  .ledger .edit{ background:none; border:none; color: var(--ink-soft); font-size: 14px; padding: 0 0 0 6px; cursor:pointer; }
+  .cat-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 0; border-bottom:1px dashed var(--line);
+  }
+  .cat-row .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .cat-row .name{ flex:1; font-size:15px; }
+  .cat-row .budget-input{
+    background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:14px; text-align:right; width:80px; padding:2px 0;
+  }
+  .cat-row .budget-input:focus{ outline:none; border-color:var(--gold); }
+  .cat-row .spent{ font-size:13px; color:var(--ink-dim); width:64px; text-align:right; }
+  .cat-row .del{
+    background:none; border:none; color:var(--vermilion-dim); font-size:16px; cursor:pointer; padding:2px 4px;
+  }
+  .cat-row .del:active{ color:var(--vermilion); }
 
-  .empty{ color: var(--ink-soft); font-size: 13px; text-align:center; padding: 18px 0; opacity: 0.7; }
+  .add-cat{ display:flex; gap:8px; margin-top:14px; }
+  .add-cat input[type=text]{
+    flex:1; background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:14px; padding:6px 2px;
+  }
+  .add-cat input[type=number]{
+    width:80px; background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:14px; padding:6px 2px; text-align:right;
+  }
+  .add-cat input:focus{ outline:none; border-color:var(--gold); }
+  .add-cat button{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
+    font-size:13px; padding:0 14px; border-radius:4px; cursor:pointer;
+  }
+  .add-cat button:active{ background:var(--vermilion-dim); border-color:var(--vermilion); }
 
-  .chart-row{ display:flex; align-items:center; gap: 22px; }
-  .donut-wrap{ position:relative; width: 150px; height:150px; flex:0 0 auto; }
-  .donut-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .donut-center .amt{ font-family:'Space Mono', monospace; font-weight:700; font-size:16px; }
-  .donut-center .lbl{ font-size:9px; color:var(--ink-soft); letter-spacing:0.1em; margin-top:2px; }
+  .budget-total{
+    display:flex; justify-content:space-between; margin-top:14px; padding-top:12px;
+    border-top:1px solid var(--line); font-size:14px; color:var(--ink-dim);
+  }
+  .budget-total b{ color:var(--ink); font-size:16px; }
 
-  .cat-list{ flex:1; list-style:none; margin:0; padding:0; }
-  .cat-list li{ display:flex; align-items:center; gap:7px; padding: 5px 0; font-size:12.5px; }
-  .cat-list .cname{ flex:1; color:var(--ink); }
-  .cat-list .camt{ font-family:'Space Mono', monospace; color:var(--ink-soft); font-size:12px; }
-  .cat-list .cpct{ font-family:'Space Mono', monospace; color:var(--ink-soft); font-size:10px; width:32px; text-align:right; }
+  /* donut */
+  .donut-wrap{ display:flex; align-items:center; gap:22px; }
+  .donut{
+    width:150px; height:150px; border-radius:50%; position:relative; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background: conic-gradient(var(--panel-2) 0deg 360deg);
+  }
+  .donut::after{
+    content:''; position:absolute; width:98px; height:98px; border-radius:50%; background:var(--panel);
+  }
+  .donut .center{ position:relative; z-index:1; text-align:center; }
+  .donut .center .amt{ font-size:19px; font-weight:700; }
+  .donut .center .lbl{ font-size:11px; color:var(--ink-dim); margin-top:2px; }
+  .legend{ flex:1; font-size:13px; color:var(--ink-dim); }
+  .legend .empty{ color:var(--ink-dim); }
+  .legend-item{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .legend-item .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .legend-item .nm{ flex:1; color:var(--ink); }
+  .legend-item .val{ color:var(--ink-dim); }
 
-  .cat-manage{ margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--paper-line); }
-  .cat-chip{ display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.6);
-    border:1px solid var(--paper-line); border-radius:20px; padding: 4px 10px 4px 8px; margin: 0 6px 6px 0; font-size:12px; }
-  .cat-chip .dot{ width:8px; height:8px; }
-  .cat-chip button{ background:none; border:none; color: var(--hanko-soft); padding:0 0 0 4px; font-size:13px; cursor:pointer; }
-  .add-cat-row{ display:flex; gap:8px; margin-top: 8px; }
-  .add-cat-row input{ flex:1; }
+  /* record entry */
+  .input-line{
+    width:100%; background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:15px; padding:8px 2px; margin-bottom:16px;
+  }
+  .input-line::placeholder{ color:#5c584f; }
+  .input-line:focus{ outline:none; border-color:var(--gold); }
 
-  .cat-budget-list{ list-style:none; margin:0; padding:0; }
-  .cat-budget-list li{ display:flex; align-items:center; gap:8px; padding:8px 0;
-    border-bottom:1px dashed var(--paper-line); font-size:13px; }
-  .cat-budget-list li:last-child{ border-bottom:none; }
-  .cat-budget-list .cname{ flex:1; color:var(--ink); display:flex; align-items:center; gap:7px; }
-  .cat-budget-list input[type=number]{ width:88px; font-size:14px; text-align:right; }
-  .cat-budget-list .remain{ font-family:'Space Mono', monospace; font-size:11px; width:76px;
-    text-align:right; color:var(--ink-soft); white-space:nowrap; }
-  .cat-budget-list .remain.neg{ color:var(--hanko); }
-  .cat-budget-list .del-cat{ background:none; border:none; color: var(--hanko-soft);
-    font-size:15px; padding:0 0 0 2px; cursor:pointer; }
+  .cat-amount-row{ display:flex; gap:12px; margin-bottom:16px; }
+  select.cat-select{
+    flex:1.3; background:var(--panel-2); border:1px solid var(--line); border-radius:4px;
+    color:var(--ink); font-size:15px; padding:9px 8px;
+  }
+  input.amt-input{
+    flex:1; background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:16px; text-align:right; padding:8px 2px;
+  }
+  input.amt-input:focus, select.cat-select:focus{ outline:none; }
 
-  .balance{ margin-top: 22px; border: 2px solid var(--ink); padding: 22px 18px; text-align: right;
-    position: relative; background: rgba(255,255,255,0.4); }
-  .balance .label{ font-size: 12px; letter-spacing: 0.15em; color: var(--ink-soft); margin-bottom: 4px; }
-  .balance .amount{ font-family: 'Space Mono', monospace; font-size: 40px; font-weight: 700; line-height: 1; }
-  .balance .amount.pos{ color: var(--ok); }
-  .balance .amount.neg{ color: var(--hanko); }
-  .balance .stamp{ position:absolute; top: -14px; left: -14px; width: 50px; height: 50px;
-    border: 2px solid var(--hanko); border-radius: 4px; color: var(--hanko); font-family:'Shippori Mincho', serif;
-    font-weight:700; font-size: 12px; display:flex; align-items:center; justify-content:center;
-    background: var(--paper); transform: rotate(-8deg); letter-spacing: 0.05em; line-height:1.2; text-align:center; }
+  input.date-input{
+    width:100%; background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:15px; padding:8px 2px; margin-bottom:18px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+  input.date-input:focus{ outline:none; border-color:var(--gold); }
+  input.date-input::-webkit-calendar-picker-indicator{ filter:invert(0.7); }
 
-  .meta-row{ display:flex; justify-content:space-between; font-size: 11px; color: var(--ink-soft);
-    margin-top: 8px; letter-spacing: 0.05em; }
-  .reset-line{ text-align:center; margin-top: 28px; }
-  .reset-line button{ font-size: 11px; padding: 6px 10px; }
-  ::selection{ background: var(--gold); color: white; }
+  .btn-primary{
+    width:100%; background:var(--vermilion); border:none; border-radius:5px;
+    color:#fff; font-size:16px; font-weight:700; padding:14px; cursor:pointer;
+    letter-spacing:.05em;
+  }
+  .btn-primary:active{ background:#a8371f; }
+
+  .record-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 0; border-bottom:1px dashed var(--line); font-size:14px;
+  }
+  .record-item .rl{ display:flex; flex-direction:column; gap:2px; }
+  .record-item .rl .memo{ color:var(--ink); }
+  .record-item .rl .meta{ font-size:11px; color:var(--ink-dim); }
+  .record-item .rr{ display:flex; align-items:center; gap:10px; }
+  .record-item .amt{ color:var(--ink); font-weight:600; }
+  .record-item .del{ background:none; border:none; color:var(--vermilion-dim); font-size:15px; cursor:pointer; }
+  .empty-note{ text-align:center; color:var(--ink-dim); padding:22px 0; font-size:14px; }
+
+  /* remaining box */
+  .remain-wrap{ position:relative; margin-top:6px; }
+  .stamp{
+    position:absolute; top:-14px; left:-8px; z-index:2;
+    background:var(--vermilion); color:#fff; font-family:'Shippori Mincho', serif;
+    font-size:13px; padding:6px 10px; border-radius:3px; transform:rotate(-6deg);
+    box-shadow:0 3px 8px rgba(0,0,0,.5); letter-spacing:.15em;
+  }
+  .remain-box{
+    border:1px solid var(--gold); border-radius:6px; padding:22px 20px 18px;
+    background:var(--panel); display:flex; justify-content:space-between; align-items:flex-end;
+  }
+  .remain-box .lbl{ color:var(--ink-dim); font-size:14px; letter-spacing:.05em; }
+  .remain-box .amt{ font-size:34px; font-weight:800; color:var(--green); font-family:'Shippori Mincho', serif; }
+  .remain-box .amt.neg{ color:var(--vermilion); }
+
+  .sub-summary{
+    display:flex; justify-content:space-between; font-size:13px; color:var(--ink-dim);
+    margin-top:14px; padding:0 2px;
+  }
+
+  .reset-btn{
+    display:block; margin:22px auto 0; background:none; border:1px solid var(--line);
+    color:var(--ink-dim); font-size:13px; padding:9px 22px; border-radius:5px; cursor:pointer;
+  }
+  .reset-btn:active{ border-color:var(--vermilion-dim); color:var(--vermilion); }
+
+  .confirm-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.7); display:none;
+    align-items:center; justify-content:center; z-index:50; padding:24px;
+  }
+  .confirm-overlay.show{ display:flex; }
+  .confirm-box{
+    background:var(--panel-2); border:1px solid var(--gold); border-radius:8px;
+    padding:24px 20px; max-width:320px; text-align:center;
+  }
+  .confirm-box p{ font-size:14px; color:var(--ink); margin:0 0 18px; line-height:1.6; }
+  .confirm-actions{ display:flex; gap:10px; }
+  .confirm-actions button{
+    flex:1; padding:11px; border-radius:5px; font-size:14px; cursor:pointer; border:1px solid var(--line);
+    background:var(--panel); color:var(--ink);
+  }
+  .confirm-actions button.ok{ background:var(--vermilion); border-color:var(--vermilion); color:#fff; }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header>
-    <h1>のこり帳</h1>
-    <div class="sub">GYAKUSAN LEDGER</div>
+  <header class="top">
+    <h1>逆算家計簿</h1>
+    <span class="en">GYAKUSAN LEDGER</span>
   </header>
 
-  <div class="sticky-total" id="stickyTotal">
-    <span class="sticky-label">予算総額</span>
-    <span class="sticky-amount" id="stickyBudgetAmount">¥0</span>
+  <div class="card">
+    <div class="field-row">
+      <span class="lbl">予算総額</span>
+      <div><span class="yen">¥</span><input type="number" id="totalBudget" value="0" inputmode="numeric"></div>
+    </div>
   </div>
 
   <div class="card">
-    <label>カテゴリ別の予算</label>
-    <ul class="cat-budget-list" id="catBudgetList"></ul>
-    <div class="add-cat-row">
+    <div class="section-title">カテゴリ別の予算</div>
+    <div id="catList"></div>
+    <div class="add-cat">
       <input type="text" id="newCatName" placeholder="新しいカテゴリ名">
-      <input type="number" id="newCatBudget" placeholder="¥予算" inputmode="numeric" style="width:100px">
-      <button class="ghost small" id="addCatBtn">追加</button>
+      <input type="number" id="newCatBudget" placeholder="¥予算" inputmode="numeric">
+      <button onclick="addCategory()">追加</button>
     </div>
-    <div class="meta-row" style="margin-top:14px;">
+    <div class="budget-total">
       <span>予算の合計</span>
-      <span id="totalBudgetDisplay" class="yen">¥0</span>
+      <b id="budgetSum">¥0</b>
     </div>
   </div>
 
   <div class="card">
-    <label>使った金額を記録する</label>
-    <div class="entry-form">
-      <input type="text" id="itemName" placeholder="なにに使った？（任意）">
-      <div class="entry-row3">
-        <select id="itemCategory"></select>
-        <input type="number" id="itemAmount" placeholder="¥0" inputmode="numeric" style="width:110px">
-      </div>
-      <input type="date" id="itemDate">
-      <button id="addBtn">＋ 記録に追加</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <label>内訳</label>
-    <div class="chart-row">
-      <div class="donut-wrap">
-        <svg id="donut" width="150" height="150" viewBox="0 0 150 150"></svg>
-        <div class="donut-center">
+    <div class="section-title">内訳</div>
+    <div class="donut-wrap">
+      <div class="donut" id="donut">
+        <div class="center">
           <div class="amt" id="donutTotal">¥0</div>
           <div class="lbl">合計</div>
         </div>
       </div>
-      <ul class="cat-list" id="catList"></ul>
+      <div class="legend" id="legend"><div class="empty">記録がまだありません</div></div>
     </div>
   </div>
 
   <div class="card">
-    <label>これまでの記録</label>
-    <ul class="ledger" id="ledgerList"></ul>
-    <div class="empty" id="emptyMsg">まだ記録はありません</div>
+    <div class="section-title">使った金額を記録する</div>
+    <input type="text" class="input-line" id="memoInput" placeholder="なにに使った？（任意）">
+    <div class="cat-amount-row">
+      <select class="cat-select" id="catSelect"></select>
+      <input type="number" class="amt-input" id="amtInput" placeholder="¥0" inputmode="numeric">
+    </div>
+    <input type="date" class="date-input" id="dateInput">
+    <button class="btn-primary" onclick="addRecord()">＋ 記録に追加</button>
   </div>
 
-  <div class="balance">
+  <div class="card">
+    <div class="section-title">これまでの記録</div>
+    <div id="recordList"><div class="empty-note">まだ記録はありません</div></div>
+  </div>
+
+  <div class="remain-wrap">
     <div class="stamp">のこり</div>
-    <div class="label">残金</div>
-    <div class="amount" id="balanceAmount">¥0</div>
-  </div>
-  <div class="meta-row">
-    <span id="spentTotal">使った合計 ¥0</span>
-    <span id="itemCount">0 件</span>
+    <div class="remain-box">
+      <span class="lbl">残金</span>
+      <span class="amt" id="remainAmt">¥0</span>
+    </div>
   </div>
 
-  <div class="reset-line">
-    <button class="ghost" id="resetBtn">記録をすべてリセット</button>
+  <div class="sub-summary">
+    <span>使った合計 <span id="spentSum">¥0</span></span>
+    <span id="recordCount">0 件</span>
   </div>
+
+  <button class="reset-btn" onclick="confirmReset()">記録をすべてリセット</button>
 
 </div>
 
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <p>記録・予算・カテゴリをすべて消去します。<br>この操作は元に戻せません。</p>
+    <div class="confirm-actions">
+      <button onclick="closeConfirm()">やめる</button>
+      <button class="ok" onclick="doReset()">リセットする</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  const STORAGE_KEY = 'gyakusan-ledger-v3';
+const STORAGE_KEY = 'gyakusan-ledger-v1';
+const DEFAULT_COLORS = ['#c8452e','#4f7d63','#b89257','#4a6fa5','#7d6ba0','#a85c5c','#4f8a8b','#8a7248','#5c7a99','#9c5b8c'];
+const DEFAULT_CATS = ['食費','日用品','趣味','固定費','その他','医療費','交通費','衣服','交際費','投資'];
 
-  const PALETTE = [
-    '#a83a32', '#3c6e52', '#b08d3f', '#3d5a80', '#7a5c8e',
-    '#c96a5c', '#6b8f71', '#8c6d3f', '#5b7a9e', '#9c7ab0',
-    '#4a5568', '#af8a53'
-  ];
+let state = { totalBudget:0, categories:[], records:[] };
 
-  const DEFAULT_CATEGORIES = [
-    '食費','日用品','趣味','固定費','その他','医療費',
-    '交通費','衣服','交際費','投資'
-  ].map((name, i) => ({ name, color: PALETTE[i % PALETTE.length], budget: 0 }));
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      state = JSON.parse(raw);
+      return;
+    }
+  }catch(e){}
+  state = {
+    totalBudget: 0,
+    categories: DEFAULT_CATS.map((n,i)=>({ id: 'c'+i, name:n, budget:0, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length] })),
+    records: []
+  };
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
 
-  function loadState(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return JSON.parse(raw);
-    }catch(e){}
-    return { entries: [], categories: DEFAULT_CATEGORIES };
-  }
-  function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+function fmt(n){ return '¥' + Math.round(n).toLocaleString('ja-JP'); }
 
-  let state = loadState();
-  if(!state.categories || state.categories.length === 0) state.categories = DEFAULT_CATEGORIES;
-  state.categories.forEach(c => { if(typeof c.budget !== 'number') c.budget = 0; });
+function spentByCategory(catId){
+  return state.records.filter(r=>r.catId===catId).reduce((s,r)=>s+Number(r.amount||0),0);
+}
+function totalSpent(){
+  return state.records.reduce((s,r)=>s+Number(r.amount||0),0);
+}
+function totalCatBudget(){
+  return state.categories.reduce((s,c)=>s+Number(c.budget||0),0);
+}
 
-  const itemName = document.getElementById('itemName');
-  const itemAmount = document.getElementById('itemAmount');
-  const itemDate = document.getElementById('itemDate');
-  const itemCategory = document.getElementById('itemCategory');
-  const addBtn = document.getElementById('addBtn');
-  const ledgerList = document.getElementById('ledgerList');
-  const emptyMsg = document.getElementById('emptyMsg');
-  const balanceAmount = document.getElementById('balanceAmount');
-  const spentTotal = document.getElementById('spentTotal');
-  const itemCount = document.getElementById('itemCount');
-  const resetBtn = document.getElementById('resetBtn');
-  const catBudgetList = document.getElementById('catBudgetList');
-  const newCatName = document.getElementById('newCatName');
-  const newCatBudget = document.getElementById('newCatBudget');
-  const addCatBtn = document.getElementById('addCatBtn');
-  const totalBudgetDisplay = document.getElementById('totalBudgetDisplay');
-  const stickyBudgetAmount = document.getElementById('stickyBudgetAmount');
-  const donutSvg = document.getElementById('donut');
-  const donutTotal = document.getElementById('donutTotal');
+function render(){
+  document.getElementById('totalBudget').value = state.totalBudget;
+
+  // categories
   const catList = document.getElementById('catList');
+  catList.innerHTML = '';
+  state.categories.forEach(c=>{
+    const spent = spentByCategory(c.id);
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+    row.innerHTML = `
+      <span class="dot" style="background:${c.color}"></span>
+      <span class="name">${escapeHtml(c.name)}</span>
+      <input type="number" class="budget-input" value="${c.budget}" inputmode="numeric" data-id="${c.id}">
+      <span class="spent">${fmt(spent)}</span>
+      <button class="del" data-id="${c.id}">×</button>
+    `;
+    catList.appendChild(row);
+  });
+  catList.querySelectorAll('.budget-input').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const c = state.categories.find(c=>c.id===e.target.dataset.id);
+      if(c){ c.budget = Number(e.target.value)||0; saveState(); render(); }
+    });
+  });
+  catList.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const id = e.target.dataset.id;
+      state.categories = state.categories.filter(c=>c.id!==id);
+      state.records = state.records.filter(r=>r.catId!==id);
+      saveState(); render();
+    });
+  });
 
-  function formatYen(n){
-    const sign = n < 0 ? '−' : '';
-    return sign + '¥' + Math.abs(Math.round(n)).toLocaleString('ja-JP');
-  }
-  function escapeHtml(str){
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-  function todayStr(){
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-  function formatDateShort(dateStr){
-    if(!dateStr) return '';
-    const parts = dateStr.split('-');
-    if(parts.length !== 3) return dateStr;
-    return Number(parts[1]) + '/' + Number(parts[2]);
-  }
-  function colorForCategory(name){
-    const c = state.categories.find(c => c.name === name);
-    return c ? c.color : '#999';
+  document.getElementById('budgetSum').textContent = fmt(totalCatBudget());
+
+  // category select for record entry
+  const sel = document.getElementById('catSelect');
+  const prevVal = sel.value;
+  sel.innerHTML = state.categories.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  if(state.categories.some(c=>c.id===prevVal)) sel.value = prevVal;
+
+  // donut + legend
+  const spent = totalSpent();
+  document.getElementById('donutTotal').textContent = fmt(spent);
+  const donut = document.getElementById('donut');
+  const legend = document.getElementById('legend');
+  if(spent <= 0){
+    donut.style.background = 'conic-gradient(var(--panel-2) 0deg 360deg)';
+    legend.innerHTML = '<div class="empty">記録がまだありません</div>';
+  }else{
+    let acc = 0;
+    const stops = [];
+    const items = [];
+    state.categories.forEach(c=>{
+      const s = spentByCategory(c.id);
+      if(s<=0) return;
+      const deg = (s/spent)*360;
+      stops.push(`${c.color} ${acc}deg ${acc+deg}deg`);
+      items.push({name:c.name, color:c.color, val:s});
+      acc += deg;
+    });
+    if(stops.length===0){
+      donut.style.background = 'conic-gradient(var(--panel-2) 0deg 360deg)';
+      legend.innerHTML = '<div class="empty">記録がまだありません</div>';
+    }else{
+      donut.style.background = `conic-gradient(${stops.join(',')})`;
+      legend.innerHTML = items.sort((a,b)=>b.val-a.val).map(it=>`
+        <div class="legend-item">
+          <span class="dot" style="background:${it.color}"></span>
+          <span class="nm">${escapeHtml(it.name)}</span>
+          <span class="val">${fmt(it.val)}</span>
+        </div>
+      `).join('');
+    }
   }
 
-  function renderCategorySelect(){
-    const current = itemCategory.value;
-    itemCategory.innerHTML = state.categories.map(c =>
-      `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`
-    ).join('');
-    if(state.categories.some(c => c.name === current)) itemCategory.value = current;
-  }
-
-  function spentByCategory(name){
-    return state.entries.reduce((sum, e) => e.category === name ? sum + (Number(e.amount)||0) : sum, 0);
-  }
-
-  function renderCatBudgetList(){
-    catBudgetList.innerHTML = state.categories.map((c, idx) => {
-      const spent = spentByCategory(c.name);
-      const remain = (Number(c.budget) || 0) - spent;
+  // records
+  const recordList = document.getElementById('recordList');
+  if(state.records.length===0){
+    recordList.innerHTML = '<div class="empty-note">まだ記録はありません</div>';
+  }else{
+    const sorted = [...state.records].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.createdAt-a.createdAt);
+    recordList.innerHTML = sorted.map(r=>{
+      const cat = state.categories.find(c=>c.id===r.catId);
+      const catName = cat ? cat.name : '（削除済み）';
+      const memo = r.memo ? escapeHtml(r.memo) : catName;
       return `
-        <li>
-          <span class="cname">
-            <span class="dot" style="background:${c.color}"></span>
-            ${escapeHtml(c.name)}
-          </span>
-          <input type="number" class="cat-budget-input" data-idx="${idx}" value="${c.budget || ''}" placeholder="¥0" inputmode="numeric">
-          <span class="remain ${remain < 0 ? 'neg' : ''}">${formatYen(remain)}</span>
-          <button data-idx="${idx}" class="del-cat" title="削除">×</button>
-        </li>
+        <div class="record-item">
+          <div class="rl">
+            <span class="memo">${memo}</span>
+            <span class="meta">${catName} ・ ${r.date||''}</span>
+          </div>
+          <div class="rr">
+            <span class="amt">${fmt(r.amount)}</span>
+            <button class="del" data-id="${r.id}">×</button>
+          </div>
+        </div>
       `;
     }).join('');
-
-    const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
-    totalBudgetDisplay.textContent = formatYen(totalBudget);
-    stickyBudgetAmount.textContent = formatYen(totalBudget);
-  }
-
-  function describeDonut(data){
-    // data: [{name, color, value}]
-    const total = data.reduce((s, d) => s + d.value, 0);
-    if(total <= 0){
-      return `<circle cx="75" cy="75" r="58" fill="none" stroke="#e3dbc8" stroke-width="26"/>`;
-    }
-    const r = 58, cx = 75, cy = 75, circumference = 2 * Math.PI * r;
-    let offset = 0;
-    let circles = '';
-    data.forEach(d => {
-      if(d.value <= 0) return;
-      const frac = d.value / total;
-      const dash = frac * circumference;
-      const gap = circumference - dash;
-      circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}"
-        stroke-width="26" stroke-dasharray="${dash} ${gap}"
-        stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
-      offset += dash;
-    });
-    return circles;
-  }
-
-  function render(){
-    renderCatBudgetList();
-    renderCategorySelect();
-
-    // ledger
-    ledgerList.innerHTML = '';
-    if(state.entries.length === 0){
-      emptyMsg.style.display = 'block';
-    } else {
-      emptyMsg.style.display = 'none';
-      state.entries.forEach((entry, idx) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <span class="dot" style="background:${colorForCategory(entry.category)}"></span>
-          <span class="name">${escapeHtml(entry.name || entry.category)}<br><span class="cat">${formatDateShort(entry.date)}　${escapeHtml(entry.category)}</span></span>
-          <span class="leader"></span>
-          <span class="amt">${formatYen(entry.amount)}</span>
-          <button class="edit" data-idx="${idx}" title="編集">✎</button>
-          <button class="del" data-idx="${idx}" title="削除">×</button>
-        `;
-        ledgerList.appendChild(li);
+    recordList.querySelectorAll('.del').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const id = e.target.dataset.id;
+        state.records = state.records.filter(r=>r.id!==id);
+        saveState(); render();
       });
-    }
-
-    // category totals
-    const totalsByCategory = {};
-    state.categories.forEach(c => totalsByCategory[c.name] = 0);
-    state.entries.forEach(e => {
-      totalsByCategory[e.category] = (totalsByCategory[e.category] || 0) + (Number(e.amount) || 0);
     });
-    const chartData = state.categories
-      .map(c => ({ name: c.name, color: c.color, value: totalsByCategory[c.name] || 0 }))
-      .sort((a,b) => b.value - a.value);
-
-    const spent = state.entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-
-    donutSvg.innerHTML = describeDonut(chartData);
-    donutTotal.textContent = formatYen(spent);
-
-    const shown = chartData.filter(d => d.value > 0);
-    catList.innerHTML = shown.length === 0
-      ? `<li style="color:var(--ink-soft); font-size:12px;">記録がまだありません</li>`
-      : shown.map(d => `
-          <li>
-            <span class="dot" style="background:${d.color}"></span>
-            <span class="cname">${escapeHtml(d.name)}</span>
-            <span class="camt">${formatYen(d.value)}</span>
-            <span class="cpct">${spent > 0 ? Math.round(d.value/spent*100) : 0}%</span>
-          </li>
-        `).join('');
-
-    const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
-    const remaining = totalBudget - spent;
-    balanceAmount.textContent = formatYen(remaining);
-    balanceAmount.classList.toggle('pos', remaining >= 0);
-    balanceAmount.classList.toggle('neg', remaining < 0);
-
-    spentTotal.textContent = '使った合計 ' + formatYen(spent);
-    itemCount.textContent = state.entries.length + ' 件';
-
-    saveState();
   }
 
-  function addEntry(){
-    const name = itemName.value.trim();
-    const amount = Number(itemAmount.value);
-    const category = itemCategory.value || (state.categories[0] && state.categories[0].name);
-    if(!amount || amount <= 0){ itemAmount.focus(); return; }
-    if(!category){ alert('先にカテゴリを追加してください'); return; }
-    state.entries.unshift({ name, amount, category, date: itemDate.value || todayStr() });
-    itemName.value = '';
-    itemAmount.value = '';
-    itemDate.value = todayStr();
-    addBtn.textContent = '＋ 記録に追加';
-    itemName.focus();
-    render();
-  }
-  itemDate.value = todayStr();
-  addBtn.addEventListener('click', addEntry);
-  itemAmount.addEventListener('keydown', (e) => { if(e.key === 'Enter') addEntry(); });
-  itemName.addEventListener('keydown', (e) => { if(e.key === 'Enter') itemAmount.focus(); });
+  // remaining / summary
+  const remain = state.totalBudget - spent;
+  const remainEl = document.getElementById('remainAmt');
+  remainEl.textContent = fmt(remain);
+  remainEl.classList.toggle('neg', remain < 0);
+  document.getElementById('spentSum').textContent = fmt(spent);
+  document.getElementById('recordCount').textContent = state.records.length + ' 件';
+}
 
-  ledgerList.addEventListener('click', (e) => {
-    if(e.target.classList.contains('del')){
-      state.entries.splice(Number(e.target.dataset.idx), 1);
-      render();
-    }
-    if(e.target.classList.contains('edit')){
-      const idx = Number(e.target.dataset.idx);
-      const entry = state.entries[idx];
-      itemName.value = entry.name || '';
-      itemCategory.value = entry.category;
-      itemAmount.value = entry.amount;
-      itemDate.value = entry.date || todayStr();
-      state.entries.splice(idx, 1);
-      addBtn.textContent = '✓ 直して記録に戻す';
-      render();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      itemAmount.focus();
-    }
-  });
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
 
-  addCatBtn.addEventListener('click', () => {
-    const name = newCatName.value.trim();
-    if(!name) return;
-    if(state.categories.some(c => c.name === name)){ newCatName.value=''; newCatBudget.value=''; return; }
-    const color = PALETTE[state.categories.length % PALETTE.length];
-    const budget = Number(newCatBudget.value) || 0;
-    state.categories.push({ name, color, budget });
-    newCatName.value = '';
-    newCatBudget.value = '';
-    render();
-  });
-  newCatName.addEventListener('keydown', (e) => { if(e.key === 'Enter') newCatBudget.focus(); });
-  newCatBudget.addEventListener('keydown', (e) => { if(e.key === 'Enter') addCatBtn.click(); });
+document.getElementById('totalBudget').addEventListener('change', e=>{
+  state.totalBudget = Number(e.target.value)||0;
+  saveState(); render();
+});
 
-  catBudgetList.addEventListener('click', (e) => {
-    if(e.target.classList.contains('del-cat')){
-      const idx = Number(e.target.dataset.idx);
-      const cat = state.categories[idx];
-      const inUse = state.entries.some(en => en.category === cat.name);
-      if(inUse && !confirm(`「${cat.name}」を使った記録があります。カテゴリを削除しますか？（記録は残ります）`)) return;
-      state.categories.splice(idx, 1);
-      render();
-    }
-  });
+function addCategory(){
+  const nameInp = document.getElementById('newCatName');
+  const budgetInp = document.getElementById('newCatBudget');
+  const name = nameInp.value.trim();
+  if(!name) return;
+  const budget = Number(budgetInp.value)||0;
+  const color = DEFAULT_COLORS[state.categories.length % DEFAULT_COLORS.length];
+  state.categories.push({ id:'c'+Date.now(), name, budget, color });
+  nameInp.value=''; budgetInp.value='';
+  saveState(); render();
+}
 
-  catBudgetList.addEventListener('input', (e) => {
-    if(e.target.classList.contains('cat-budget-input')){
-      const idx = Number(e.target.dataset.idx);
-      state.categories[idx].budget = Number(e.target.value) || 0;
-      // update totals live without full re-render (keeps input focus)
-      const totalBudget = state.categories.reduce((sum, c) => sum + (Number(c.budget) || 0), 0);
-      totalBudgetDisplay.textContent = formatYen(totalBudget);
-      stickyBudgetAmount.textContent = formatYen(totalBudget);
-      const spent = state.entries.reduce((sum, en) => sum + (Number(en.amount) || 0), 0);
-      const remaining = totalBudget - spent;
-      balanceAmount.textContent = formatYen(remaining);
-      balanceAmount.classList.toggle('pos', remaining >= 0);
-      balanceAmount.classList.toggle('neg', remaining < 0);
-      saveState();
-    }
-  });
-  catBudgetList.addEventListener('change', () => render());
+function addRecord(){
+  const memo = document.getElementById('memoInput').value.trim();
+  const catId = document.getElementById('catSelect').value;
+  const amount = Number(document.getElementById('amtInput').value)||0;
+  const date = document.getElementById('dateInput').value || todayStr();
+  if(!catId || amount<=0) return;
+  state.records.push({ id:'r'+Date.now(), memo, catId, amount, date, createdAt:Date.now() });
+  document.getElementById('memoInput').value='';
+  document.getElementById('amtInput').value='';
+  saveState(); render();
+}
 
-  resetBtn.addEventListener('click', () => {
-    if(confirm('記録をすべて消去します。カテゴリと予算は残ります。よろしいですか？')){
-      state.entries = [];
-      render();
-    }
-  });
+function todayStr(){
+  const d = new Date();
+  const p = n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
 
-  render();
+function confirmReset(){ document.getElementById('confirmOverlay').classList.add('show'); }
+function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('show'); }
+function doReset(){
+  state = {
+    totalBudget: 0,
+    categories: DEFAULT_CATS.map((n,i)=>({ id: 'c'+i, name:n, budget:0, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length] })),
+    records: []
+  };
+  saveState(); render(); closeConfirm();
+}
+
+document.getElementById('dateInput').value = todayStr();
+loadState();
+render();
 </script>
 </body>
 </html>
