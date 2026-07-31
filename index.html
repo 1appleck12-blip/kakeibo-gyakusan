@@ -329,13 +329,17 @@ function loadState(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
       state = JSON.parse(raw);
+      if(typeof state.nextColorIndex !== 'number'){
+        state.nextColorIndex = state.categories.length % DEFAULT_COLORS.length;
+      }
       return;
     }
   }catch(e){}
   state = {
     totalBudget: 0,
     categories: DEFAULT_CATS.map((n,i)=>({ id: 'c'+i, name:n, budget:0, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length] })),
-    records: []
+    records: [],
+    nextColorIndex: DEFAULT_CATS.length % DEFAULT_COLORS.length
   };
 }
 function saveState(){
@@ -495,7 +499,9 @@ function addCategory(){
   const name = nameInp.value.trim();
   if(!name) return;
   const budget = Number(budgetInp.value)||0;
-  const color = DEFAULT_COLORS[state.categories.length % DEFAULT_COLORS.length];
+  if(typeof state.nextColorIndex !== 'number') state.nextColorIndex = 0;
+  const color = DEFAULT_COLORS[state.nextColorIndex % DEFAULT_COLORS.length];
+  state.nextColorIndex = (state.nextColorIndex + 1) % DEFAULT_COLORS.length;
   state.categories.push({ id:'c'+Date.now(), name, budget, color });
   nameInp.value=''; budgetInp.value='';
   saveState(); render();
@@ -536,7 +542,8 @@ function doReset(){
   state = {
     totalBudget: 0,
     categories: DEFAULT_CATS.map((n,i)=>({ id: 'c'+i, name:n, budget:0, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length] })),
-    records: []
+    records: [],
+    nextColorIndex: DEFAULT_CATS.length % DEFAULT_COLORS.length
   };
   saveState(); render();
 }
