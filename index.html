@@ -6,6 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="逆算家計簿">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" href="favicon-32.png">
 <title>逆算家計簿</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Mochiy+Pop+One&display=swap');
@@ -299,16 +303,16 @@
     <span id="recordCount">0 件</span>
   </div>
 
-  <button class="reset-btn" onclick="confirmReset()">記録をすべてリセット</button>
+  <button class="reset-btn" onclick="openConfirm('記録・予算・カテゴリをすべて消去します。<br>この操作は元に戻せません。<br>よろしいですか？', doReset, 'リセットする')">記録をすべてリセット</button>
 
 </div>
 
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
-    <p>記録・予算・カテゴリをすべて消去します。<br>この操作は元に戻せません。</p>
+    <p id="confirmMsg">本当によろしいですか？</p>
     <div class="confirm-actions">
       <button onclick="closeConfirm()">やめる</button>
-      <button class="ok" onclick="doReset()">リセットする</button>
+      <button class="ok" id="confirmOkBtn">削除する</button>
     </div>
   </div>
 </div>
@@ -378,9 +382,17 @@ function render(){
   catList.querySelectorAll('.del').forEach(btn=>{
     btn.addEventListener('click', e=>{
       const id = e.target.dataset.id;
-      state.categories = state.categories.filter(c=>c.id!==id);
-      state.records = state.records.filter(r=>r.catId!==id);
-      saveState(); render();
+      const cat = state.categories.find(c=>c.id===id);
+      const name = cat ? cat.name : 'このカテゴリ';
+      const hasRecords = state.records.some(r=>r.catId===id);
+      const msg = hasRecords
+        ? `「${name}」を削除します。<br>このカテゴリの記録もすべて消えます。<br>よろしいですか？`
+        : `「${name}」を削除します。<br>よろしいですか？`;
+      openConfirm(msg, ()=>{
+        state.categories = state.categories.filter(c=>c.id!==id);
+        state.records = state.records.filter(r=>r.catId!==id);
+        saveState(); render();
+      });
     });
   });
 
@@ -507,15 +519,26 @@ function todayStr(){
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
 }
 
-function confirmReset(){ document.getElementById('confirmOverlay').classList.add('show'); }
-function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('show'); }
+let _confirmAction = null;
+function openConfirm(message, onConfirm, okLabel){
+  document.getElementById('confirmMsg').innerHTML = message;
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.textContent = okLabel || '削除する';
+  _confirmAction = onConfirm;
+  okBtn.onclick = ()=>{ if(_confirmAction) _confirmAction(); closeConfirm(); };
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function closeConfirm(){
+  document.getElementById('confirmOverlay').classList.remove('show');
+  _confirmAction = null;
+}
 function doReset(){
   state = {
     totalBudget: 0,
     categories: DEFAULT_CATS.map((n,i)=>({ id: 'c'+i, name:n, budget:0, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length] })),
     records: []
   };
-  saveState(); render(); closeConfirm();
+  saveState(); render();
 }
 
 document.getElementById('dateInput').value = todayStr();
