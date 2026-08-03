@@ -94,6 +94,7 @@
   }
   .cat-row .budget-input:focus{ outline:none; border-color:var(--gold); }
   .cat-row .spent{ font-size:13px; color:var(--ink-dim); width:64px; text-align:right; }
+  .cat-row .spent.neg{ color:var(--vermilion); font-weight:700; }
   .cat-row .del{
     background:none; border:none; color:var(--vermilion-dim); font-size:16px; cursor:pointer; padding:2px 4px;
   }
@@ -360,7 +361,10 @@ function saveState(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
 }
 
-function fmt(n){ return '¥' + Math.round(n).toLocaleString('ja-JP'); }
+function fmt(n){
+  const r = Math.round(n);
+  return (r<0 ? '-¥' : '¥') + Math.abs(r).toLocaleString('ja-JP');
+}
 
 function spentByCategory(catId){
   return state.records.filter(r=>r.catId===catId).reduce((s,r)=>s+Number(r.amount||0),0);
@@ -380,6 +384,7 @@ function render(){
   catList.innerHTML = '';
   state.categories.forEach((c,idx)=>{
     const spent = spentByCategory(c.id);
+    const remain = Number(c.budget||0) - spent;
     const row = document.createElement('div');
     row.className = 'cat-row';
     row.innerHTML = `
@@ -390,7 +395,7 @@ function render(){
       <span class="dot" style="background:${c.color}"></span>
       <span class="name">${escapeHtml(c.name)}</span>
       <input type="number" class="budget-input" value="${c.budget}" inputmode="numeric" data-id="${c.id}">
-      <span class="spent">${fmt(spent)}</span>
+      <span class="spent${remain<0?' neg':''}">${fmt(remain)}</span>
       <button class="del" data-id="${c.id}">×</button>
     `;
     catList.appendChild(row);
