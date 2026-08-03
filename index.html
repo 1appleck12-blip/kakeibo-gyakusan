@@ -203,7 +203,7 @@
   .empty-note{ text-align:center; color:var(--ink-dim); padding:22px 0; font-size:14px; }
 
   /* remaining box */
-  .remain-wrap{ position:relative; margin-top:6px; }
+  .remain-wrap{ position:relative; margin-top:22px; margin-bottom:20px; }
   .stamp{
     position:absolute; top:-14px; left:-8px; z-index:2;
     background:var(--vermilion); color:#fff; font-family:'Shippori Mincho', serif;
@@ -255,6 +255,14 @@
     <span class="en">GYAKUSAN LEDGER</span>
   </header>
 
+  <div class="remain-wrap">
+    <div class="stamp">のこり</div>
+    <div class="remain-box">
+      <span class="lbl">残金</span>
+      <span class="amt" id="remainAmt">¥0</span>
+    </div>
+  </div>
+
   <div class="card">
     <div class="field-row">
       <span class="lbl">予算総額</span>
@@ -303,14 +311,6 @@
   <div class="card">
     <div class="section-title">これまでの記録</div>
     <div id="recordList"><div class="empty-note">まだ記録はありません</div></div>
-  </div>
-
-  <div class="remain-wrap">
-    <div class="stamp">のこり</div>
-    <div class="remain-box">
-      <span class="lbl">残金</span>
-      <span class="amt" id="remainAmt">¥0</span>
-    </div>
   </div>
 
   <div class="sub-summary">
