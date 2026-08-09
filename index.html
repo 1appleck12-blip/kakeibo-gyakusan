@@ -60,6 +60,9 @@
     font-size:10px; letter-spacing:.18em; color:var(--ink-dim); font-family:'Zen Kaku Gothic New', sans-serif;
     text-align:center;
   }
+  .month-label{
+    text-align:center; font-size:12px; color:var(--gold); letter-spacing:.1em; margin-top:8px;
+  }
 
   .card{
     background:var(--panel); border:1px solid var(--line); border-radius:6px;
@@ -135,6 +138,34 @@
   }
   .budget-total b{ color:var(--ink); font-size:16px; }
 
+  .pending-toggle{
+    width:100%; background:none; border:none; color:var(--gold); font-size:14px;
+    text-align:left; padding:2px 0; cursor:pointer; letter-spacing:.03em;
+  }
+  .pending-panel{ margin-top:14px; padding-top:14px; border-top:1px dashed var(--line); }
+  .pending-panel .field-row{ border-bottom:1px solid var(--gold); }
+  .pending-cat-row{
+    display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line);
+  }
+  .pending-cat-row .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .pending-cat-row .name{ flex:1; font-size:14px; color:var(--ink-dim); }
+  .pending-cat-row input{
+    background:transparent; border:none; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:14px; text-align:right; width:90px; padding:2px 0;
+  }
+  .pending-cat-row input:focus{ outline:none; border-color:var(--gold); }
+  .pending-note{ font-size:12px; color:var(--ink-dim); margin:12px 0; line-height:1.6; }
+  .pending-note.active{ color:var(--gold); }
+  .btn-secondary{
+    width:100%; background:var(--panel-2); border:1px solid var(--gold); border-radius:5px;
+    color:var(--gold); font-size:14px; font-weight:700; padding:12px; cursor:pointer; margin-top:4px;
+  }
+  .btn-secondary:active{ background:var(--vermilion-dim); border-color:var(--vermilion); color:#fff; }
+  .btn-clear-pending{
+    display:block; width:100%; margin-top:10px; background:none; border:none;
+    color:var(--ink-dim); font-size:12px; padding:6px; cursor:pointer; text-decoration:underline;
+  }
+
   /* donut */
   .donut-wrap{ display:flex; align-items:center; gap:22px; }
   .donut{
@@ -200,6 +231,8 @@
   .record-item .rr{ display:flex; align-items:center; gap:10px; }
   .record-item .amt{ color:var(--ink); font-weight:600; }
   .record-item .del{ background:none; border:none; color:var(--vermilion-dim); font-size:15px; cursor:pointer; }
+  .record-item .edit{ background:none; border:none; color:var(--gold); font-size:15px; cursor:pointer; }
+  .record-item .edit:active{ color:#fff; }
   .empty-note{ text-align:center; color:var(--ink-dim); padding:22px 0; font-size:14px; }
 
   /* remaining box */
@@ -254,6 +287,7 @@
     <h1>逆算家計簿</h1>
     <span class="en">GYAKUSAN LEDGER</span>
   </header>
+  <div class="month-label" id="monthLabel"></div>
 
   <div class="remain-wrap">
     <div class="stamp">のこり</div>
@@ -282,6 +316,18 @@
       <span>予算の合計</span>
       <b id="budgetSum">¥0</b>
     </div>
+
+    <button class="pending-toggle" id="pendingToggle" onclick="togglePendingPanel()">▸ 来月の予算を先に決める</button>
+    <div class="pending-panel" id="pendingPanel" style="display:none;">
+      <div class="field-row">
+        <span class="lbl">来月の予算総額</span>
+        <div><span class="yen">¥</span><input type="number" id="pendingTotalBudget" inputmode="numeric"></div>
+      </div>
+      <div id="pendingCatList"></div>
+      <div class="pending-note" id="pendingNote"></div>
+      <button class="btn-secondary" onclick="savePendingBudget()">この内容で来月の予算を決める</button>
+      <button class="btn-clear-pending" id="pendingClearBtn" onclick="clearPendingBudget()" style="display:none;">来月の予算設定を取り消す</button>
+    </div>
   </div>
 
   <div class="card">
@@ -298,18 +344,19 @@
   </div>
 
   <div class="card">
-    <div class="section-title">使った金額を記録する</div>
+    <div class="section-title" id="recordFormTitle">使った金額を記録する</div>
     <input type="text" class="input-line" id="memoInput" placeholder="なにに使った？（任意）">
     <div class="cat-amount-row">
       <select class="cat-select" id="catSelect"></select>
       <input type="number" class="amt-input" id="amtInput" placeholder="¥0" inputmode="numeric">
     </div>
     <input type="date" class="date-input" id="dateInput">
-    <button class="btn-primary" onclick="addRecord()">＋ 記録に追加</button>
+    <button class="btn-primary" id="recordSubmitBtn" onclick="addRecord()">＋ 記録に追加</button>
+    <button class="btn-clear-pending" id="recordCancelBtn" onclick="cancelEditRecord()" style="display:none;">編集をやめる</button>
   </div>
 
   <div class="card">
-    <div class="section-title">これまでの記録</div>
+    <div class="section-title" id="recordListTitle">今月の記録</div>
     <div id="recordList"><div class="empty-note">まだ記録はありません</div></div>
   </div>
 
@@ -337,6 +384,18 @@ const STORAGE_KEY = 'gyakusan-ledger-v1';
 const DEFAULT_COLORS = ['#c8452e','#4f7d63','#b89257','#4a6fa5','#7d6ba0','#a85c5c','#4f8a8b','#8a7248','#5c7a99','#9c5b8c'];
 const DEFAULT_CATS = ['食費','日用品','趣味','固定費','その他','医療費','交通費','衣服','交際費','投資'];
 
+function monthKeyOf(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function currentMonthKey(){ return monthKeyOf(new Date()); }
+function nextMonthKey(){
+  const d = new Date();
+  d.setMonth(d.getMonth()+1);
+  return monthKeyOf(d);
+}
+function monthLabelJP(key){
+  const [y,m] = key.split('-');
+  return `${y}年${Number(m)}月`;
+}
+
 let state = { totalBudget:0, categories:[], records:[] };
 
 function loadState(){
@@ -347,6 +406,14 @@ function loadState(){
       if(typeof state.nextColorIndex !== 'number'){
         state.nextColorIndex = state.categories.length % DEFAULT_COLORS.length;
       }
+      if(!state.activeMonthKey){
+        // existing data from before month-tracking existed: treat as "this month" so nothing rolls over unexpectedly
+        state.activeMonthKey = currentMonthKey();
+      }
+      if(typeof state.pendingBudget === 'undefined'){
+        state.pendingBudget = null;
+      }
+      applyMonthRollover();
       return;
     }
   }catch(e){}
@@ -354,9 +421,29 @@ function loadState(){
     totalBudget: 0,
     categories: DEFAULT_CATS.map((n,i)=>({ id: 'c'+i, name:n, budget:0, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length] })),
     records: [],
-    nextColorIndex: DEFAULT_CATS.length % DEFAULT_COLORS.length
+    nextColorIndex: DEFAULT_CATS.length % DEFAULT_COLORS.length,
+    activeMonthKey: currentMonthKey(),
+    pendingBudget: null
   };
 }
+
+function applyMonthRollover(){
+  const cmk = currentMonthKey();
+  if(state.activeMonthKey === cmk) return;
+  if(state.pendingBudget){
+    if(typeof state.pendingBudget.totalBudget === 'number'){
+      state.totalBudget = state.pendingBudget.totalBudget;
+    }
+    const cb = state.pendingBudget.categoryBudgets || {};
+    state.categories.forEach(c=>{
+      if(typeof cb[c.id] === 'number') c.budget = cb[c.id];
+    });
+  }
+  state.pendingBudget = null;
+  state.activeMonthKey = cmk;
+  saveState();
+}
+
 function saveState(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
 }
@@ -367,16 +454,20 @@ function fmt(n){
 }
 
 function spentByCategory(catId){
-  return state.records.filter(r=>r.catId===catId).reduce((s,r)=>s+Number(r.amount||0),0);
+  const cmk = currentMonthKey();
+  return state.records.filter(r=>r.catId===catId && (r.date||'').slice(0,7)===cmk).reduce((s,r)=>s+Number(r.amount||0),0);
 }
 function totalSpent(){
-  return state.records.reduce((s,r)=>s+Number(r.amount||0),0);
+  const cmk = currentMonthKey();
+  return state.records.filter(r=>(r.date||'').slice(0,7)===cmk).reduce((s,r)=>s+Number(r.amount||0),0);
 }
 function totalCatBudget(){
   return state.categories.reduce((s,c)=>s+Number(c.budget||0),0);
 }
 
 function render(){
+  document.getElementById('monthLabel').textContent = monthLabelJP(currentMonthKey()) + ' の家計簿';
+  document.getElementById('recordListTitle').textContent = `今月の記録（${Number(currentMonthKey().split('-')[1])}月）`;
   document.getElementById('totalBudget').value = state.totalBudget;
 
   // categories
@@ -486,12 +577,14 @@ function render(){
     }
   }
 
-  // records
+  // records (current month only — past months stay saved but aren't shown here)
   const recordList = document.getElementById('recordList');
-  if(state.records.length===0){
+  const cmk = currentMonthKey();
+  const monthRecords = state.records.filter(r=>(r.date||'').slice(0,7)===cmk);
+  if(monthRecords.length===0){
     recordList.innerHTML = '<div class="empty-note">まだ記録はありません</div>';
   }else{
-    const sorted = [...state.records].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.createdAt-a.createdAt);
+    const sorted = [...monthRecords].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.createdAt-a.createdAt);
     recordList.innerHTML = sorted.map(r=>{
       const cat = state.categories.find(c=>c.id===r.catId);
       const catName = cat ? cat.name : '（削除済み）';
@@ -504,14 +597,21 @@ function render(){
           </div>
           <div class="rr">
             <span class="amt">${fmt(r.amount)}</span>
+            <button class="edit" data-id="${r.id}">✎</button>
             <button class="del" data-id="${r.id}">×</button>
           </div>
         </div>
       `;
     }).join('');
+    recordList.querySelectorAll('.edit').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        startEditRecord(e.target.dataset.id);
+      });
+    });
     recordList.querySelectorAll('.del').forEach(btn=>{
       btn.addEventListener('click', e=>{
         const id = e.target.dataset.id;
+        if(editingRecordId === id) cancelEditRecord();
         state.records = state.records.filter(r=>r.id!==id);
         saveState(); render();
       });
@@ -524,7 +624,9 @@ function render(){
   remainEl.textContent = fmt(remain);
   remainEl.classList.toggle('neg', remain < 0);
   document.getElementById('spentSum').textContent = fmt(spent);
-  document.getElementById('recordCount').textContent = state.records.length + ' 件';
+  document.getElementById('recordCount').textContent = monthRecords.length + ' 件';
+
+  renderPendingPanel();
 }
 
 function escapeHtml(s){
@@ -535,6 +637,63 @@ document.getElementById('totalBudget').addEventListener('change', e=>{
   state.totalBudget = Number(e.target.value)||0;
   saveState(); render();
 });
+
+function togglePendingPanel(){
+  const panel = document.getElementById('pendingPanel');
+  const btn = document.getElementById('pendingToggle');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  btn.textContent = (open ? '▸ ' : '▾ ') + '来月の予算を先に決める';
+}
+
+function renderPendingPanel(){
+  const nmk = nextMonthKey();
+  const nmLabel = monthLabelJP(nmk);
+  const pending = state.pendingBudget;
+
+  const totalInp = document.getElementById('pendingTotalBudget');
+  totalInp.value = pending && typeof pending.totalBudget === 'number' ? pending.totalBudget : state.totalBudget;
+
+  const catList = document.getElementById('pendingCatList');
+  catList.innerHTML = state.categories.map(c=>{
+    const cb = pending && pending.categoryBudgets ? pending.categoryBudgets[c.id] : undefined;
+    const val = typeof cb === 'number' ? cb : c.budget;
+    return `
+      <div class="pending-cat-row">
+        <span class="dot" style="background:${c.color}"></span>
+        <span class="name">${escapeHtml(c.name)}</span>
+        <input type="number" class="pending-budget-input" data-id="${c.id}" value="${val}" inputmode="numeric">
+      </div>
+    `;
+  }).join('');
+
+  const note = document.getElementById('pendingNote');
+  const clearBtn = document.getElementById('pendingClearBtn');
+  if(pending){
+    note.textContent = `${nmLabel}から、この内容が自動的に反映されます。`;
+    note.classList.add('active');
+    clearBtn.style.display = 'block';
+  }else{
+    note.textContent = `何も設定しなければ、${nmLabel}も今月と同じ予算がそのまま引き継がれます。`;
+    note.classList.remove('active');
+    clearBtn.style.display = 'none';
+  }
+}
+
+function savePendingBudget(){
+  const totalBudget = Number(document.getElementById('pendingTotalBudget').value)||0;
+  const categoryBudgets = {};
+  document.querySelectorAll('.pending-budget-input').forEach(inp=>{
+    categoryBudgets[inp.dataset.id] = Number(inp.value)||0;
+  });
+  state.pendingBudget = { totalBudget, categoryBudgets };
+  saveState(); render();
+}
+
+function clearPendingBudget(){
+  state.pendingBudget = null;
+  saveState(); render();
+}
 
 function addCategory(){
   const nameInp = document.getElementById('newCatName');
@@ -556,6 +715,8 @@ function addCategory(){
   saveState(); render();
 }
 
+let editingRecordId = null;
+
 function addRecord(){
   const memo = document.getElementById('memoInput').value.trim();
   const catId = document.getElementById('catSelect').value;
@@ -570,10 +731,45 @@ function addRecord(){
     setTimeout(()=>{ amtInp.classList.remove('err'); amtInp.placeholder = orig; }, 1600);
     return;
   }
-  state.records.push({ id:'r'+Date.now(), memo, catId, amount, date, createdAt:Date.now() });
+  if(editingRecordId){
+    const r = state.records.find(r=>r.id===editingRecordId);
+    if(r){ r.memo = memo; r.catId = catId; r.amount = amount; r.date = date; }
+    editingRecordId = null;
+    exitEditUI();
+  }else{
+    state.records.push({ id:'r'+Date.now(), memo, catId, amount, date, createdAt:Date.now() });
+  }
   document.getElementById('memoInput').value='';
   document.getElementById('amtInput').value='';
   saveState(); render();
+}
+
+function startEditRecord(id){
+  const r = state.records.find(r=>r.id===id);
+  if(!r) return;
+  editingRecordId = id;
+  document.getElementById('memoInput').value = r.memo || '';
+  document.getElementById('catSelect').value = r.catId;
+  document.getElementById('amtInput').value = r.amount;
+  document.getElementById('dateInput').value = r.date || todayStr();
+  document.getElementById('recordFormTitle').textContent = '記録を編集する';
+  document.getElementById('recordSubmitBtn').textContent = '保存する';
+  document.getElementById('recordCancelBtn').style.display = 'block';
+  document.getElementById('memoInput').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function cancelEditRecord(){
+  editingRecordId = null;
+  document.getElementById('memoInput').value = '';
+  document.getElementById('amtInput').value = '';
+  document.getElementById('dateInput').value = todayStr();
+  exitEditUI();
+}
+
+function exitEditUI(){
+  document.getElementById('recordFormTitle').textContent = '使った金額を記録する';
+  document.getElementById('recordSubmitBtn').textContent = '＋ 記録に追加';
+  document.getElementById('recordCancelBtn').style.display = 'none';
 }
 
 function todayStr(){
@@ -600,7 +796,9 @@ function doReset(){
     totalBudget: 0,
     categories: DEFAULT_CATS.map((n,i)=>({ id: 'c'+i, name:n, budget:0, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length] })),
     records: [],
-    nextColorIndex: DEFAULT_CATS.length % DEFAULT_COLORS.length
+    nextColorIndex: DEFAULT_CATS.length % DEFAULT_COLORS.length,
+    activeMonthKey: currentMonthKey(),
+    pendingBudget: null
   };
   saveState(); render();
 }
