@@ -61,7 +61,22 @@
     text-align:center;
   }
   .month-label{
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px;
     text-align:center; font-size:12px; color:var(--gold); letter-spacing:.1em; margin-top:8px;
+  }
+  .month-nav{
+    background:none; border:1px solid var(--line); color:var(--gold); border-radius:4px;
+    font-size:12px; padding:3px 9px; cursor:pointer; line-height:1.4;
+  }
+  .month-nav:disabled{ color:#3a3a40; border-color:var(--line); cursor:default; }
+  .month-nav:active:not(:disabled){ background:var(--panel-2); }
+  .month-nav-label{ font-family:'Zen Kaku Gothic New', sans-serif; }
+  .month-back-note{
+    width:100%; text-align:center; font-size:11px; color:var(--ink-dim); margin-top:4px; letter-spacing:.03em;
+  }
+  .month-back-btn{
+    background:none; border:none; color:var(--gold); font-size:11px; padding:0; cursor:pointer;
+    text-decoration:underline;
   }
 
   .card{
@@ -164,6 +179,10 @@
   .btn-clear-pending{
     display:block; width:100%; margin-top:10px; background:none; border:none;
     color:var(--ink-dim); font-size:12px; padding:6px; cursor:pointer; text-decoration:underline;
+  }
+  .backup-note{ font-size:12px; color:var(--ink-dim); line-height:1.7; margin-bottom:14px; }
+  .import-label{
+    display:block; text-align:center; box-sizing:border-box; margin-top:10px;
   }
 
   /* donut */
@@ -365,6 +384,14 @@
     <span id="recordCount">0 件</span>
   </div>
 
+  <div class="card">
+    <div class="section-title">バックアップ</div>
+    <div class="backup-note">ホーム画面のアイコンを削除するとデータも消えます。消す前や機種変更の前に、ここでバックアップを取ってください。</div>
+    <button class="btn-secondary" onclick="exportBackup()">データを書き出す（JSON）</button>
+    <label class="btn-secondary import-label" for="importFile">データを読み込む（復元）</label>
+    <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importBackup(event)">
+  </div>
+
   <button class="reset-btn" onclick="openConfirm('記録・予算・カテゴリをすべて消去します。<br>この操作は元に戻せません。<br>よろしいですか？', doReset, 'リセットする')">記録をすべてリセット</button>
 
 </div>
@@ -395,6 +422,14 @@ function monthLabelJP(key){
   const [y,m] = key.split('-');
   return `${y}年${Number(m)}月`;
 }
+function addMonthsToKey(key, delta){
+  const [y,m] = key.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  return monthKeyOf(d);
+}
+
+// which month is currently being browsed/displayed (session-only; always starts on the real current month)
+let viewMonthKey = currentMonthKey();
 
 let state = { totalBudget:0, categories:[], records:[] };
 
@@ -454,20 +489,29 @@ function fmt(n){
 }
 
 function spentByCategory(catId){
-  const cmk = currentMonthKey();
-  return state.records.filter(r=>r.catId===catId && (r.date||'').slice(0,7)===cmk).reduce((s,r)=>s+Number(r.amount||0),0);
+  const mk = viewMonthKey;
+  return state.records.filter(r=>r.catId===catId && (r.date||'').slice(0,7)===mk).reduce((s,r)=>s+Number(r.amount||0),0);
 }
 function totalSpent(){
-  const cmk = currentMonthKey();
-  return state.records.filter(r=>(r.date||'').slice(0,7)===cmk).reduce((s,r)=>s+Number(r.amount||0),0);
+  const mk = viewMonthKey;
+  return state.records.filter(r=>(r.date||'').slice(0,7)===mk).reduce((s,r)=>s+Number(r.amount||0),0);
 }
 function totalCatBudget(){
   return state.categories.reduce((s,c)=>s+Number(c.budget||0),0);
 }
 
 function render(){
-  document.getElementById('monthLabel').textContent = monthLabelJP(currentMonthKey()) + ' の家計簿';
-  document.getElementById('recordListTitle').textContent = `今月の記録（${Number(currentMonthKey().split('-')[1])}月）`;
+  const isCurrent = viewMonthKey === currentMonthKey();
+  document.getElementById('monthLabel').innerHTML = `
+    <button class="month-nav" onclick="prevMonth()">◀</button>
+    <span class="month-nav-label">${monthLabelJP(viewMonthKey)}${isCurrent ? '（今月）' : ''} の家計簿</span>
+    <button class="month-nav" onclick="nextMonth()" ${isCurrent ? 'disabled' : ''}>▶</button>
+  `;
+  if(!isCurrent){
+    document.getElementById('monthLabel').insertAdjacentHTML('beforeend',
+      `<div class="month-back-note">過去の月は現在の予算設定をもとに計算しています ・ <button class="month-back-btn" onclick="goToCurrentMonth()">今月に戻る</button></div>`);
+  }
+  document.getElementById('recordListTitle').textContent = `${Number(viewMonthKey.split('-')[1])}月の記録`;
   document.getElementById('totalBudget').value = state.totalBudget;
 
   // categories
@@ -577,10 +621,9 @@ function render(){
     }
   }
 
-  // records (current month only — past months stay saved but aren't shown here)
+  // records (scoped to the month being viewed — other months stay saved but aren't shown here)
   const recordList = document.getElementById('recordList');
-  const cmk = currentMonthKey();
-  const monthRecords = state.records.filter(r=>(r.date||'').slice(0,7)===cmk);
+  const monthRecords = state.records.filter(r=>(r.date||'').slice(0,7)===viewMonthKey);
   if(monthRecords.length===0){
     recordList.innerHTML = '<div class="empty-note">まだ記録はありません</div>';
   }else{
@@ -637,6 +680,22 @@ document.getElementById('totalBudget').addEventListener('change', e=>{
   state.totalBudget = Number(e.target.value)||0;
   saveState(); render();
 });
+
+function prevMonth(){
+  viewMonthKey = addMonthsToKey(viewMonthKey, -1);
+  render();
+}
+function nextMonth(){
+  const cmk = currentMonthKey();
+  const candidate = addMonthsToKey(viewMonthKey, 1);
+  if(candidate > cmk) return; // don't browse into the future
+  viewMonthKey = candidate;
+  render();
+}
+function goToCurrentMonth(){
+  viewMonthKey = currentMonthKey();
+  render();
+}
 
 function togglePendingPanel(){
   const panel = document.getElementById('pendingPanel');
@@ -791,6 +850,53 @@ function closeConfirm(){
   document.getElementById('confirmOverlay').classList.remove('show');
   _confirmAction = null;
 }
+function exportBackup(){
+  try{
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    const p = n=>String(n).padStart(2,'0');
+    a.href = url;
+    a.download = `逆算家計簿_backup_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  }catch(e){
+    alert('書き出しに失敗しました。');
+  }
+}
+
+function importBackup(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const imported = JSON.parse(e.target.result);
+      if(!imported || !Array.isArray(imported.categories) || !Array.isArray(imported.records)){
+        alert('このファイルは正しいバックアップ形式ではないようです。');
+        return;
+      }
+      openConfirm('今のデータを、読み込んだバックアップの内容で上書きします。<br>この操作は元に戻せません。<br>よろしいですか？', ()=>{
+        state = imported;
+        if(typeof state.nextColorIndex !== 'number'){
+          state.nextColorIndex = state.categories.length % DEFAULT_COLORS.length;
+        }
+        if(!state.activeMonthKey) state.activeMonthKey = currentMonthKey();
+        if(typeof state.pendingBudget === 'undefined') state.pendingBudget = null;
+        saveState(); render();
+      }, '復元する');
+    }catch(err){
+      alert('ファイルの読み込みに失敗しました。JSON形式のバックアップファイルを選んでください。');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 function doReset(){
   state = {
     totalBudget: 0,
